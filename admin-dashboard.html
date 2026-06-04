@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ServiceApotheke</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f4f7f6; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #1a5fb4; color: white; }
+        .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-success { background: #26a269; }
+        .btn-danger { background: #c01c28; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Admin Control Panel</h2>
+        
+        <h3>Apotheker (Pharmacists)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Dokumente</th>
+                    <th>Status</th>
+                    <th>Aktion</th>
+                </tr>
+            </thead>
+            <tbody id="pharmacistList"></tbody>
+        </table>
+
+        <h3 style="margin-top: 40px;">Apotheken (Pharmacies)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Apotheken-Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Aktion</th>
+                </tr>
+            </thead>
+            <tbody id="pharmacyList"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = "https://serviceapotheke-api-830781040278.europe-west3.run.app/api";
+
+        async function loadUsers() {
+            const phRes = await fetch(`${API_URL}/Admin/pharmacists`);
+            const pharmacists = await phRes.json();
+            
+            document.getElementById('pharmacistList').innerHTML = pharmacists.map(p => `
+                <tr>
+                    <td>${p.id}</td>
+                    <td>${p.fullName}</td>
+                    <td>${p.email}</td>
+                    <td>
+                        ${p.approbationDocumentPath ? `<a href="${API_URL.replace('/api', '')}${p.approbationDocumentPath}" target="_blank">Approbation</a><br>` : 'Keine Approbation'}
+                        ${p.cvDocumentPath ? `<a href="${API_URL.replace('/api', '')}${p.cvDocumentPath}" target="_blank">Lebenslauf</a>` : ''}
+                    </td>
+                    <td><span class="badge" style="background: ${p.isVerified ? '#26a269' : '#c01c28'}">${p.isVerified ? 'Verifiziert' : 'Ausstehend'}</span></td>
+                    <td><button class="btn ${p.isVerified ? 'btn-danger' : 'btn-success'}" onclick="toggleStatus('pharmacist', ${p.id})">${p.isVerified ? 'Sperren' : 'Verifizieren'}</button></td>
+                </tr>
+            `).join('');
+
+            const rxRes = await fetch(`${API_URL}/Admin/pharmacies`);
+            const pharmacies = await rxRes.json();
+            
+            document.getElementById('pharmacyList').innerHTML = pharmacies.map(p => `
+                <tr>
+                    <td>${p.id}</td>
+                    <td>${p.pharmacyName}</td>
+                    <td>${p.email}</td>
+                    <td><span class="badge" style="background: ${p.isVerified ? '#26a269' : '#c01c28'}">${p.isVerified ? 'Verifiziert' : 'Ausstehend'}</span></td>
+                    <td><button class="btn ${p.isVerified ? 'btn-danger' : 'btn-success'}" onclick="toggleStatus('pharmacy', ${p.id})">${p.isVerified ? 'Sperren' : 'Verifizieren'}</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function toggleStatus(type, id) {
+            await fetch(`${API_URL}/Admin/${type}/${id}/verify`, { method: 'PUT' });
+            loadUsers();
+        }
+
+        loadUsers();
+    </script>
+</body>
+</html>

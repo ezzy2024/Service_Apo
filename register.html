@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ServiceApotheke - Neues Konto erstellen</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif }
+        body { background-color: #f5f9ff; color: #333; line-height: 1.6; min-height: 100vh; padding: 10px; display: flex; align-items: center; justify-content: center; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 15px; width: 100% }
+        .registration-box { background: white; display: flex; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08); flex-direction: row; min-height: auto }
+        .left-panel { flex: 1; background: linear-gradient(135deg, #1a5fb4, #26a269); color: white; padding: 30px; display: flex; flex-direction: column; justify-content: center; text-align: center; min-height: 300px }
+        .left-panel h1 { font-size: 28px; margin-bottom: 15px; color: white }
+        .left-panel p { font-size: 16px; opacity: 0.9; line-height: 1.5 }
+        .right-panel { flex: 1.2; padding: 30px; width: 100% }
+        .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 25px; gap: 5px }
+        .tab { flex: 1; text-align: center; padding: 12px 5px; cursor: pointer; font-weight: bold; color: #666; transition: all 0.3s ease; font-size: 14px; white-space: nowrap; border-bottom: 3px solid transparent }
+        .tab.active { color: #1a5fb4; border-bottom: 3px solid #1a5fb4 }
+        .form-group { margin-bottom: 20px }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 15px; color: #444 }
+        input { width: 100%; padding: 16px; border: 1.5px solid #e1e5eb; border-radius: 10px; font-size: 16px; text-align: left; background-color: #f8fafc; transition: all 0.3s ease }
+        input:focus { border-color: #1a5fb4; outline: none; box-shadow: 0 0 0 3px rgba(26, 95, 180, 0.1); background-color: white }
+        .btn { width: 100%; padding: 18px; background: #1a5fb4; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 17px }
+        .btn:hover { background: #0d4a9c; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(13, 74, 156, 0.2) }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none }
+        .error-msg { color: #dc3545; font-size: 14px; margin-top: 10px; display: none; background: #f8d7da; padding: 12px; border-radius: 8px; text-align: center; border-left: 4px solid #dc3545 }
+        .form-content { display: none; animation: fadeIn 0.4s ease }
+        .form-content.active { display: block }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
+        .login-link { margin-top: 25px; text-align: center; font-size: 15px; color: #666 }
+        .login-link a { color: #1a5fb4; font-weight: bold; text-decoration: none; }
+        @media(max-width:768px) { .registration-box { flex-direction: column; } .left-panel { min-height: 200px; border-radius: 15px 15px 0 0; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="registration-box">
+            <div class="left-panel">
+                <h1>Willkommen!</h1>
+                <p>Registrieren Sie sich jetzt, um Teil unseres professionellen Apotheker-Netzwerks zu werden.</p>
+            </div>
+            <div class="right-panel">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('pharmacist')">Apotheker / PTA</div>
+                    <div class="tab" onclick="switchTab('pharmacy')">Apotheke</div>
+                </div>
+                <form id="pharmacistForm" class="form-content active">
+                    <div class="form-group"><label>Vollständiger Name *</label><input type="text" id="p_fullName" required placeholder="z.B. Max Müller"></div>
+                    <div class="form-group"><label>E-Mail *</label><input type="email" id="p_email" required placeholder="beispiel@mail.de"></div>
+                    <div class="form-group"><label>Passwort *</label><input type="password" id="p_password" required minlength="6" placeholder="******"></div>
+                    <div class="form-group"><label>Telefonnummer *</label><input type="tel" id="p_phone" required placeholder="0123456789"></div>
+                    <div class="form-group"><label>Adresse *</label><input type="text" id="p_address" required placeholder="Stadt, Straße"></div>
+                    <div id="p_error" class="error-msg"></div>
+                    <button type="submit" class="btn" id="p_btn"><i class="fas fa-user-plus"></i> Apotheker-Konto erstellen</button>
+                </form>
+                <form id="pharmacyForm" class="form-content">
+                    <div class="form-group"><label>Apotheken-Name *</label><input type="text" id="ph_name" required placeholder="Apotheke am Markt"></div>
+                    <div class="form-group"><label>Apotheken-E-Mail *</label><input type="email" id="ph_email" required placeholder="apotheke@mail.de"></div>
+                    <div class="form-group"><label>Passwort *</label><input type="password" id="ph_password" required minlength="6" placeholder="******"></div>
+                    <div class="form-group"><label>Apotheken-Telefon *</label><input type="tel" id="ph_phone" required placeholder="03012345678"></div>
+                    <div class="form-group"><label>Vollständige Apotheken-Adresse *</label><input type="text" id="ph_address" required placeholder="Vollständige Adresse der Apotheke"></div>
+                    <div class="form-group"><label>Lizenznummer *</label><input type="text" id="ph_license" required placeholder="Offizielle Apothekenlizenznummer"></div>
+                    <div id="ph_error" class="error-msg"></div>
+                    <button type="submit" class="btn" id="ph_btn"><i class="fas fa-clinic-medical"></i> Apotheken-Konto erstellen</button>
+                </form>
+                <p class="login-link">Haben Sie bereits ein Konto? <a href="login.html">Anmelden</a></p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_URL = "https://serviceapotheke-api-830781040278.europe-west3.run.app/api";
+        function switchTab(role) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.form-content').forEach(f => f.classList.remove('active'));
+            if (role === 'pharmacist') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('pharmacistForm').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('pharmacyForm').classList.add('active');
+            }
+        }
+        document.getElementById('pharmacistForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('p_btn');
+            const errorDiv = document.getElementById('p_error');
+            const data = {
+                fullName: document.getElementById('p_fullName').value,
+                email: document.getElementById('p_email').value,
+                password: document.getElementById('p_password').value,
+                phoneNumber: document.getElementById('p_phone').value,
+                address: document.getElementById('p_address').value
+            };
+            await sendRequest(`${API_URL}/Pharmacist/register`, data, btn, errorDiv, "pharmacist");
+        });
+        document.getElementById('pharmacyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('ph_btn');
+            const errorDiv = document.getElementById('ph_error');
+            const data = {
+                pharmacyName: document.getElementById('ph_name').value,
+                email: document.getElementById('ph_email').value,
+                password: document.getElementById('ph_password').value,
+                phoneNumber: document.getElementById('ph_phone').value,
+                address: document.getElementById('ph_address').value,
+                licenseNumber: document.getElementById('ph_license').value
+            };
+            await sendRequest(`${API_URL}/Pharmacy/register`, data, btn, errorDiv, "pharmacy");
+        });
+        async function sendRequest(url, data, btn, errorDiv, role) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Wird gespeichert...';
+            errorDiv.style.display = "none";
+            try {
+                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (response.ok) {
+                    localStorage.setItem('regEmail', data.email);
+                    localStorage.setItem('regRole', role);
+                    window.location.href = "verify.html";
+                } else {
+                    const result = await response.text();
+                    errorDiv.innerText = result || "Bei der Registrierung ist ein Fehler aufgetreten.";
+                    errorDiv.style.display = "block";
+                }
+            } catch {
+                errorDiv.innerText = "Verbindung zum Server fehlgeschlagen.";
+                errorDiv.style.display = "block";
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = role === 'pharmacist' ? '<i class="fas fa-user-plus"></i> Apotheker-Konto erstellen' : '<i class="fas fa-clinic-medical"></i> Apotheken-Konto erstellen';
+            }
+        }
+        document.addEventListener("DOMContentLoaded", () => {
+            const params = new URLSearchParams(window.location.search);
+            const role = params.get("role");
+            if (role === "pharmacy") switchTab("pharmacy");
+        });
+    </script>
+</body>
+</html>

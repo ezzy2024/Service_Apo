@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anmeldung – Apothekenservice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: #f5f9ff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; }
+        .box { background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        .box h2 { text-align: center; margin-bottom: 20px; font-size: 28px; }
+        .tabs { display: flex; margin-bottom: 25px; background: #eee; border-radius: 8px; padding: 5px; }
+        .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; color: #666; }
+        .tab.active { background: white; color: #1a5fb4; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; background: #1a5fb4; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 18px; }
+        .btn:disabled { background: #cccccc; cursor: not-allowed; }
+        a { color: #1a5fb4; text-decoration: none; }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 20px; border-radius: 8px; color: #fff; opacity: 0; pointer-events: none; transition: 0.4s; z-index: 9999; font-size: 14px; max-width: 350px; }
+        .toast.show { opacity: 1; }
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+        .error-message { color: #dc3545; font-size: 14px; margin-top: -5px; margin-bottom: 10px; display: none; }
+    </style>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+<div class="box">
+    <h2>Anmelden</h2>
+    <div class="tabs">
+        <div id="t1" class="tab active" onclick="setRole('pharmacist')">Apotheker</div>
+        <div id="t2" class="tab" onclick="setRole('pharmacy')">Apotheke</div>
+    </div>
+    <input type="email" id="email" placeholder="E-Mail-Adresse">
+    <div id="email-error" class="error-message"></div>
+    <input type="password" id="pass" placeholder="Passwort">
+    <div id="pass-error" class="error-message"></div>
+    <button class="btn" id="login-btn" onclick="login()">Anmelden</button>
+    <div style="text-align:center; margin-top:15px;"><a href="index.html">Zurück zur Startseite</a></div>
+</div>
+<script>
+    const API_URL = "https://serviceapotheke-api-830781040278.europe-west3.run.app/api";
+    if (localStorage.getItem('userToken') && localStorage.getItem('userType')) window.location.href = "index.html";
+
+    let role = "pharmacist";
+    let isProcessing = false;
+
+    function setRole(r) {
+        if (isProcessing) return;
+        role = r;
+        document.getElementById('t1').classList.toggle('active', r === 'pharmacist');
+        document.getElementById('t2').classList.toggle('active', r === 'pharmacy');
+    }
+
+    function showToast(msg, type = "error") {
+        const toast = document.getElementById("toast");
+        toast.textContent = msg;
+        toast.className = `toast show ${type}`;
+        setTimeout(() => toast.className = "toast", 5000);
+    }
+
+    async function login() {
+        if (isProcessing) return;
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('pass').value.trim();
+        const loginBtn = document.getElementById('login-btn');
+
+        if (!email || !password) { showToast("Bitte füllen Sie alle Felder aus.", "error"); return; }
+
+        isProcessing = true;
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Wird angemeldet...';
+
+        const endpoint = role === "pharmacist" ? "Pharmacist/login" : "Pharmacy/login";
+
+        try {
+            const response = await fetch(`${API_URL}/${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                showToast(result?.message || "E-Mail oder Passwort ist falsch.", "error");
+                return;
+            }
+
+            localStorage.setItem('userId', result.id);
+            localStorage.setItem('userToken', result.token);
+            localStorage.setItem('userType', role);
+
+            showToast("Anmeldung erfolgreich!", "success");
+            setTimeout(() => { window.location.href = role === 'pharmacist' ? "pharmacist-dashboard.html" : "pharmacy-dashboard.html"; }, 1000);
+        } catch (err) {
+            showToast("Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.", "error");
+        } finally {
+            isProcessing = false;
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Anmelden';
+        }
+    }
+</script>
+</body>
+</html>

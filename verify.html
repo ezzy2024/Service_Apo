@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konto aktivieren – Apothekenservice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box }
+        body { font-family: 'Cairo', sans-serif; background: #f5f9ff; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 15px; line-height: 1.6 }
+        .box { background: white; padding: 30px 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1); width: 100%; max-width: 450px; text-align: center }
+        h2 { color: #1a5fb4; margin-bottom: 15px; font-size: 1.5rem }
+        p { color: #555; margin-bottom: 20px; font-size: 1rem }
+        #displayEmail { color: #1a5fb4; display: block; margin: 10px 0; word-break: break-all; font-size: 1rem }
+        input { width: 100%; padding: 15px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1.5rem; text-align: center; letter-spacing: 8px; outline: none }
+        input:focus { border-color: #26a269; box-shadow: 0 0 0 2px rgba(38, 162, 105, 0.2); }
+        .btn { width: 100%; padding: 15px; background: #26a269; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-bottom: 10px; }
+        .btn:disabled { background: #ccc; cursor: not-allowed }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 20px; border-radius: 10px; color: #fff; font-size: 14px; opacity: 0; pointer-events: none; transition: .4s; z-index: 9999 }
+        .toast.show { opacity: 1 }
+        .toast.success { background: #28a745 }
+        .toast.error { background: #dc3545 }
+        .status-container { display: none; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="box" id="mainBox">
+        <h2>E-Mail bestätigen</h2>
+        <div id="manualMode">
+            <p>Bitte geben Sie den Code ein, der an folgende E-Mail gesendet wurde:</p>
+            <b id="displayEmail"></b>
+            <input type="text" id="code" placeholder="000000" maxlength="10" autocomplete="off" autofocus>
+            <button class="btn" onclick="executeManualVerification()">Konto bestätigen</button>
+        </div>
+        <div id="autoMode" class="status-container">
+            <p>Ihr Konto wird überprüft. Bitte warten...</p>
+        </div>
+    </div>
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const API_URL = "[https://serviceapotheke-api-830781040278.europe-west3.run.app/api](https://serviceapotheke-api-830781040278.europe-west3.run.app/api)";
+        const toast = document.getElementById("toast");
+
+        function showToast(msg, type = "info") {
+            toast.textContent = msg;
+            toast.className = `toast show ${type}`;
+            setTimeout(() => toast.className = "toast", 3000);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get("token");
+            const emailParam = params.get("email");
+            const manualEmail = localStorage.getItem('regEmail');
+
+            if (token && emailParam) {
+                document.getElementById('manualMode').style.display = 'none';
+                document.getElementById('autoMode').style.display = 'block';
+                executeVerification(emailParam, token, "pharmacist").then(success => {
+                    if(!success) executeVerification(emailParam, token, "pharmacy");
+                });
+            } else if (manualEmail) {
+                document.getElementById('displayEmail').innerText = manualEmail;
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        async function executeManualVerification() {
+            const code = document.getElementById('code').value;
+            const email = localStorage.getItem('regEmail');
+            const role = localStorage.getItem('regRole') || "pharmacist";
+            if (!code) { showToast("Bitte Code eingeben", "error"); return; }
+            await executeVerification(email, code, role);
+        }
+
+        async function executeVerification(email, code, role) {
+            const endpoint = role === "pharmacist" ? "Pharmacist/confirm-email" : "Pharmacy/confirm-email";
+            try {
+                const response = await fetch(`${API_URL}/${endpoint}?email=${encodeURIComponent(email)}&token=${encodeURIComponent(code)}`);
+                if (response.ok) {
+                    showToast("Konto erfolgreich aktiviert!", "success");
+                    document.getElementById('mainBox').innerHTML = '<h2>Erfolg!</h2><p>Ihr Konto ist nun aktiv.</p><button class="btn" onclick="window.location.href=\'login.html\'">Zum Login</button>';
+                    localStorage.removeItem('regEmail');
+                    localStorage.removeItem('regRole');
+                    return true;
+                } else {
+                    const text = await response.text();
+                    showToast("Code ungültig oder abgelaufen.", "error");
+                    document.getElementById('manualMode').style.display = 'block';
+                    document.getElementById('autoMode').style.display = 'none';
+                    return false;
+                }
+            } catch (e) {
+                showToast("Serverfehler.", "error");
+                return false;
+            }
+        }
+    </script>
+</body>
+</html>
