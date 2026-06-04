@@ -41,7 +41,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => policy.WithOrigins("https://ezzy2024.github.io/Service_Apo/").AllowAnyMethod().AllowAnyHeader().AllowCredentials()); });
+builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => policy.WithOrigins("https://ezzy2024.github.io").AllowAnyMethod().AllowAnyHeader().AllowCredentials()); });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
