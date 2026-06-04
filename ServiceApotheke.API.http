@@ -1,0 +1,6 @@
+@ServiceApotheke.API_HostAddress = http://localhost:5111
+
+GET {{ServiceApotheke.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
