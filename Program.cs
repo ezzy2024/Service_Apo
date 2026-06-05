@@ -7,9 +7,17 @@ using System.Text;
 using ServiceApotheke.API.Data;
 using ServiceApotheke.API.Services;
 
+// --- FAILSAFE: Verhindert Abstürze durch fehlende SMTP-Variablen ---
+if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SMTP_PORT")))
+{
+    Environment.SetEnvironmentVariable("SMTP_PORT", "587");
+    Environment.SetEnvironmentVariable("SMTP_HOST", "smtp.ethereal.email");
+    Environment.SetEnvironmentVariable("SMTP_USER", "dummy");
+    Environment.SetEnvironmentVariable("SMTP_PASS", "dummy");
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Core Services Configuration
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -25,11 +33,10 @@ builder.Services.AddControllers()
             };
     });
 
-// 2. Database: Route SQLite to writable /tmp directory on Cloud Run
+// WICHTIG: Die Datenbank im temporären, beschreibbaren Ordner von Cloud Run speichern
 var dbPath = Path.Combine(Path.GetTempPath(), "app.db");
 builder.Services.AddDbContext<DataContext>(options => options.UseSqlite($"Data Source={dbPath}"));
 
-// 3. Auth & Infrastructure
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => {
@@ -41,21 +48,43 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => policy.WithOrigins("https://ezzy2024.github.io").AllowAnyMethod().AllowAnyHeader().AllowCredentials()); });
+// WICHTIG: Dynamische CORS-Richtlinie, um alle CORS-Fehler sicher auszuschließen
+builder.Services.AddCors(options => { 
+    options.AddPolicy("AllowAll", policy => 
+        policy.SetIsOriginAllowed(_ => true)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials()); 
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 builder.Services.AddScoped<ServiceApotheke.API.Services.InvoiceService>();
+
 var app = builder.Build();
 
-// 4. Ensure Database Schema on Startup
+// --- GLOBALE FEHLERBEHANDLUNG ---
+// Fängt Backend-Abstürze ab und sendet sie als lesbare JSON-Antwort an das Frontend
+app.UseExceptionHandler(c => c.Run(async context =>
+{
+    var exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+    Console.WriteLine($"[CRITICAL ERROR] {exception?.Message}\n{exception?.StackTrace}");
+    context.Response.StatusCode = 500;
+    context.Response.ContentType = "application/json";
+    context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+    await context.Response.WriteAsJsonAsync(new { 
+        message = "Ein interner Serverfehler ist aufgetreten.", 
+        detail = exception?.Message 
+    });
+}));
+
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<DataContext>();
-    context.Database.EnsureCreated(); // Ensures table schema is present on Cloud Run
+    context.Database.EnsureCreated(); 
 }
 
-// 5. Middleware Pipeline
 app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -65,6 +94,5 @@ app.UseStaticFiles();
 app.UseAuthorization();
 app.MapControllers();
 
-// 6. Cloud Run Port Binding
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Run($"http://0.0.0.0:{port}");
