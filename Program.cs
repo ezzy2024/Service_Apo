@@ -25,8 +25,8 @@ builder.Services.AddControllers()
             };
     });
 
-// 2. Database: Use Connection Resiliency and Ensure Directory exists for SQLite on Cloud Run
-var dbPath = "app.db";
+// 2. Database: Route SQLite to writable /tmp directory on Cloud Run
+var dbPath = Path.Combine(Path.GetTempPath(), "app.db");
 builder.Services.AddDbContext<DataContext>(options => options.UseSqlite($"Data Source={dbPath}"));
 
 // 3. Auth & Infrastructure
