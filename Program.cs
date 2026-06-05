@@ -34,8 +34,18 @@ builder.Services.AddControllers()
     });
 
 // WICHTIG: Die Datenbank im temporären, beschreibbaren Ordner von Cloud Run speichern
-var dbPath = Path.Combine(Path.GetTempPath(), "app.db");
-builder.Services.AddDbContext<DataContext>(options => options.UseSqlite($"Data Source={dbPath}"));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    // Fallback für lokale Entwicklung mit SQLite, falls keine Verbindungsvariable existiert
+    var dbPath = Path.Combine(Path.GetTempPath(), "app.db");
+    builder.Services.AddDbContext<DataContext>(options => options.UseSqlite($"Data Source={dbPath}"));
+}
+else
+{
+    // PostgreSQL für Produktion (Cloud Run)
+    builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(connectionString));
+}
 
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
