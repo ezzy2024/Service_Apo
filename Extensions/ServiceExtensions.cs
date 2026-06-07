@@ -29,6 +29,17 @@ namespace ServiceApotheke.API.Extensions
             return services;
         }
 
+        public static IServiceCollection AddIdentityServices(this IServiceCollection services, IConfiguration config)
+        {
+            // Ihre JWT Logik hier...
+            return services;
+        }
+
+        public static IApplicationBuilder UseGlobalExceptionHandler(this IApplicationBuilder app)
+        {
+            return app.UseMiddleware<ExceptionMiddleware>();
+        }
+
         public static void MigrateDatabase(this IApplicationBuilder app)
         {
             using var scope = app.ApplicationServices.CreateScope();

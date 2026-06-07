@@ -1,17 +1,13 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Mvc;
-using System.Text.Json.Serialization;
-using System.Text;
 using ServiceApotheke.API.Data;
 using ServiceApotheke.API.Extensions;
-using ServiceApotheke.API.Services;
 using ServiceApotheke.API.Middleware;
-
-
-
-
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
+using ServiceApotheke.API.Services;
 
 // --- FAILSAFE: Verhindert Abstürze durch fehlende SMTP-Variablen ---
 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SMTP_PORT")))
@@ -84,6 +80,7 @@ builder.Services.AddScoped<ServiceApotheke.API.Services.InvoiceService>();
 var app = builder.Build();
 app.UseGlobalExceptionHandler(); // Eigene Middleware für Fehler
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseRouting();
 app.UseCors("AllowAll");
 app.UseAuthentication();
@@ -91,8 +88,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.UseSwagger();
 app.UseSwaggerUI();
-
-app.MigrateDatabase();
 
 // --- GLOBALE FEHLERBEHANDLUNG ---
 // Fängt Backend-Abstürze ab und sendet sie als lesbare JSON-Antwort an das Frontend
