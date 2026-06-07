@@ -196,11 +196,14 @@ namespace ServiceApotheke.API.Controllers
         public async Task<IActionResult> GetPharmacist(int id)
         {
             var user = await _context.Pharmacists.FindAsync(id);
-            if (user == null) return NotFound(new { message = "Benutzer nicht gefunden." });
-
-            user.PasswordHash = null; 
+            if (user == null) 
+            {
+                // WICHTIG: Hier sehen wir, ob er im DB-Context gefunden wird
+                return NotFound(new { message = $"Pharmacist mit ID {id} nicht in DB gefunden." });
+            }
+            user.PasswordHash = null;
             return Ok(user);
-        }
+            }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdatePharmacistGeneral(int id, [FromBody] PharmacistUpdateGeneralDto dto)
