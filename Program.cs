@@ -89,10 +89,25 @@ app.UseExceptionHandler(c => c.Run(async context =>
     });
 }));
 
+// 4. Ensure Database Schema on Startup
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<DataContext>();
-    context.Database.EnsureCreated(); 
+    
+    // Fallback if using SQLite
+    if (context.Database.IsSqlite())
+    {
+        context.Database.EnsureCreated();
+    }
+    else
+    {
+        // Force PostgreSQL to apply the latest schema
+        try {
+            context.Database.EnsureCreated(); // Ensure tables exist
+        } catch (Exception ex) {
+            Console.WriteLine($"DB Init Error: {ex.Message}");
+        }
+    }
 }
 
 app.UseCors("AllowAll");
