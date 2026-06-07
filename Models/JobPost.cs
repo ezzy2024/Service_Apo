@@ -2,10 +2,11 @@ using System;
 
 namespace ServiceApotheke.API.Models
 {
-    public class JobPost
+     public class JobPost
     {
         public int Id { get; set; }
         public int PharmacyId { get; set; }
+        public virtual Pharmacy? Pharmacy { get; set; }
         public string RequestType { get; set; } = string.Empty;
         public string Urgency { get; set; } = string.Empty;
         public string StartDate { get; set; } = string.Empty;

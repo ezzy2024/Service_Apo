@@ -220,24 +220,25 @@ namespace ServiceApotheke.API.Controllers
         }
 
         [HttpGet("{id}/upcoming-shifts")]
-public async Task<IActionResult> GetUpcomingShifts(int id)
-{
-    var shifts = await _context.JobApplications
-        .Include(a => a.JobPost)
-        .Where(a => a.PharmacistId == id && a.Status == "Accepted")
-        .Select(a => new {
-            Id = a.Id,
-            JobPostId = a.JobPostId,
-            StartTime = a.JobPost.StartTime,
-            EndTime = a.JobPost.EndTime,
-            Salary = a.JobPost.Salary,
-            StartDate = a.JobPost.StartDate, // Wichtig für das Frontend-Mapping
-            PharmacyName = a.JobPost.Pharmacy != null ? a.JobPost.Pharmacy.PharmacyName : "Apotheke"
-        })
-        .ToListAsync();
-    
-    return Ok(shifts);
-}
+        public async Task<IActionResult> GetUpcomingShifts(int id)
+        {
+            var shifts = await _context.JobApplications
+                .Include(a => a.JobPost)
+                    .ThenInclude(j => j.Pharmacy) // Dies funktioniert jetzt, da Ihr Modell Pharmacy enthält
+                .Where(a => a.PharmacistId == id && a.Status == "Accepted")
+                .Select(a => new {
+                    Id = a.Id,
+                    JobPostId = a.JobPostId,
+                    StartTime = a.JobPost.StartTime,
+                    EndTime = a.JobPost.EndTime,
+                    Salary = a.JobPost.Salary,
+                    StartDate = a.JobPost.StartDate,
+                    PharmacyName = a.JobPost.Pharmacy != null ? a.JobPost.Pharmacy.PharmacyName : "Apotheke"
+                })
+                .ToListAsync();
+            
+            return Ok(shifts);
+        }
 
         [HttpGet("{id}/all-shifts")]
         public async Task<IActionResult> GetAllShifts(int id)
@@ -245,6 +246,15 @@ public async Task<IActionResult> GetUpcomingShifts(int id)
             var shifts = await _context.JobApplications
                 .Include(a => a.JobPost)
                 .Where(a => a.PharmacistId == id)
+                .Select(a => new {
+                    Id = a.Id,
+                    JobPostId = a.JobPostId,
+                    StartTime = a.JobPost.StartTime,
+                    EndTime = a.JobPost.EndTime,
+                    Salary = a.JobPost.Salary,
+                    StartDate = a.JobPost.StartDate,
+                    PharmacyName = a.JobPost.Pharmacy != null ? a.JobPost.Pharmacy.PharmacyName : "Apotheke"
+                })
                 .ToListAsync();
                 
             return Ok(shifts);
@@ -255,8 +265,17 @@ public async Task<IActionResult> GetUpcomingShifts(int id)
         {
             var shifts = await _context.JobApplications
                 .Include(a => a.JobPost)
-                // Removed invalid ThenInclude
+                    .ThenInclude(j => j.Pharmacy)
                 .Where(a => a.PharmacistId == id && a.Status == "Completed")
+                .Select(a => new {
+                    Id = a.Id,
+                    JobPostId = a.JobPostId,
+                    StartTime = a.JobPost.StartTime,
+                    EndTime = a.JobPost.EndTime,
+                    Salary = a.JobPost.Salary,
+                    StartDate = a.JobPost.StartDate,
+                    PharmacyName = a.JobPost.Pharmacy != null ? a.JobPost.Pharmacy.PharmacyName : "Apotheke"
+                })
                 .ToListAsync();
                 
             return Ok(shifts);
