@@ -8,6 +8,9 @@ using ServiceApotheke.API.Models;
 using ServiceApotheke.API.Data;
 using ServiceApotheke.API.Services;
 using System;
+using System.Threading.Tasks;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
 
 namespace ServiceApotheke.API.Controllers
 {
@@ -73,34 +76,34 @@ namespace ServiceApotheke.API.Controllers
         }
 
         [HttpGet("confirm-email")]
-public async Task<IActionResult> ConfirmEmail(string email, string token)
-{
-    var user = await _context.Pharmacists.SingleOrDefaultAsync(u => u.Email == email);
-    
-    if (user == null || user.EmailConfirmationToken != token)
-    {
-        string errorHtml = "<!DOCTYPE html><html lang='de'><body style='font-family:sans-serif; background:#f5f9ff; display:flex; align-items:center; justify-content:center; height:100vh;'><div style='background:white; padding:40px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1); text-align:center;'><h2 style='color:#c01c28;'>Ungültiger Bestätigungslink</h2><p>Der Link ist fehlerhaft oder wurde bereits verwendet.</p></div></body></html>";
-        return Content(errorHtml, "text/html");
-    }
+        public async Task<IActionResult> ConfirmEmail(string email, string token)
+        {
+            var user = await _context.Pharmacists.SingleOrDefaultAsync(u => u.Email == email);
+            
+            if (user == null || user.EmailConfirmationToken != token)
+            {
+                string errorHtml = "<!DOCTYPE html><html lang='de'><body style='font-family:sans-serif; background:#f5f9ff; display:flex; align-items:center; justify-content:center; height:100vh;'><div style='background:white; padding:40px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1); text-align:center;'><h2 style='color:#c01c28;'>Ungültiger Bestätigungslink</h2><p>Der Link ist fehlerhaft oder wurde bereits verwendet.</p></div></body></html>";
+                return Content(errorHtml, "text/html");
+            }
 
-    user.IsEmailConfirmed = true;
-    user.EmailConfirmationToken = null;
-    await _context.SaveChangesAsync();
+            user.IsEmailConfirmed = true;
+            user.EmailConfirmationToken = null;
+            await _context.SaveChangesAsync();
 
-    string successHtml = @"
-    <!DOCTYPE html>
-    <html lang='de'>
-    <head><meta charset='utf-8'><title>Konto bestätigt</title></head>
-    <body style='font-family:sans-serif; background:#f5f9ff; display:flex; align-items:center; justify-content:center; height:100vh;'>
-        <div style='background:white; padding:40px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1); text-align:center;'>
-            <h2 style='color:#26a269;'>E-Mail erfolgreich bestätigt!</h2>
-            <p style='color:#333; margin-top:10px;'>Ihr Konto ist jetzt aktiv. Sie können diesen Tab schließen und sich anmelden.</p>
-        </div>
-    </body>
-    </html>";
+            string successHtml = @"
+            <!DOCTYPE html>
+            <html lang='de'>
+            <head><meta charset='utf-8'><title>Konto bestätigt</title></head>
+            <body style='font-family:sans-serif; background:#f5f9ff; display:flex; align-items:center; justify-content:center; height:100vh;'>
+                <div style='background:white; padding:40px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1); text-align:center;'>
+                    <h2 style='color:#26a269;'>E-Mail erfolgreich bestätigt!</h2>
+                    <p style='color:#333; margin-top:10px;'>Ihr Konto ist jetzt aktiv. Sie können diesen Tab schließen und sich anmelden.</p>
+                </div>
+            </body>
+            </html>";
 
-    return Content(successHtml, "text/html");
-}
+            return Content(successHtml, "text/html");
+        }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto login)
@@ -111,12 +114,7 @@ public async Task<IActionResult> ConfirmEmail(string email, string token)
             {
                 return Unauthorized(new { message = "Ungültige Anmeldedaten." });
             }
-            /*
-            if (!user.IsEmailConfirmed)
-            {
-                return Unauthorized(new { message = "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse." });
-            }
-                */
+            
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes("EIN_LANGER_GEHEIMER_SCHLUESSEL_MIT_MINDESTENS_32_ZEICHEN");
             
@@ -137,33 +135,33 @@ public async Task<IActionResult> ConfirmEmail(string email, string token)
         }
 
         [HttpPut("{id}/profile")]
-public async Task<IActionResult> UpdateProfile(int id, [FromBody] UpdatePharmacistProfileDto dto)
-{
-    var user = await _context.Pharmacists.FindAsync(id);
-    if (user == null) return NotFound(new { message = "Benutzer nicht gefunden." });
+        public async Task<IActionResult> UpdateProfile(int id, [FromBody] UpdatePharmacistProfileDto dto)
+        {
+            var user = await _context.Pharmacists.FindAsync(id);
+            if (user == null) return NotFound(new { message = "Benutzer nicht gefunden." });
 
-    user.PreferredContactMethod = dto.PreferredContactMethod;
-    user.HasApprobation = dto.HasApprobation;
-    user.ApprobationCountry = dto.ApprobationCountry;
-    user.ExperienceYears = dto.ExperienceYears;
-    user.Specialties = dto.Specialties;
-    user.SoftwareExperience = dto.SoftwareExperience;
-    user.RadiusKm = dto.RadiusKm;
-    user.PreferredStates = dto.PreferredStates;
-    user.TravelWillingness = dto.TravelWillingness;
-    user.Mobility = dto.Mobility;
-    user.AvailabilityType = dto.AvailabilityType;
-    user.ShortNoticeAvailability = dto.ShortNoticeAvailability;
-    user.EmergencyServiceWillingness = dto.EmergencyServiceWillingness;
-    user.WeekendWillingness = dto.WeekendWillingness;
-    user.FeeModel = dto.FeeModel;
-    user.HourlyRate = dto.HourlyRate;
-    user.VatSubject = dto.VatSubject;
-    user.TravelExpenses = dto.TravelExpenses;
+            user.PreferredContactMethod = dto.PreferredContactMethod;
+            user.HasApprobation = dto.HasApprobation;
+            user.ApprobationCountry = dto.ApprobationCountry;
+            user.ExperienceYears = dto.ExperienceYears;
+            user.Specialties = dto.Specialties;
+            user.SoftwareExperience = dto.SoftwareExperience;
+            user.RadiusKm = dto.RadiusKm;
+            user.PreferredStates = dto.PreferredStates;
+            user.TravelWillingness = dto.TravelWillingness;
+            user.Mobility = dto.Mobility;
+            user.AvailabilityType = dto.AvailabilityType;
+            user.ShortNoticeAvailability = dto.ShortNoticeAvailability;
+            user.EmergencyServiceWillingness = dto.EmergencyServiceWillingness;
+            user.WeekendWillingness = dto.WeekendWillingness;
+            user.FeeModel = dto.FeeModel;
+            user.HourlyRate = dto.HourlyRate;
+            user.VatSubject = dto.VatSubject;
+            user.TravelExpenses = dto.TravelExpenses;
 
-    await _context.SaveChangesAsync();
-    return Ok(new { message = "Profil erfolgreich aktualisiert." });
-}
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Profil erfolgreich aktualisiert." });
+        }
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
@@ -193,5 +191,94 @@ public async Task<IActionResult> UpdateProfile(int id, [FromBody] UpdatePharmaci
 
             return Ok(new { message = "Code gesendet." });
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPharmacist(int id)
+        {
+            var user = await _context.Pharmacists.FindAsync(id);
+            if (user == null) return NotFound(new { message = "Benutzer nicht gefunden." });
+
+            user.PasswordHash = null; 
+            return Ok(user);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdatePharmacistGeneral(int id, [FromBody] PharmacistUpdateGeneralDto dto)
+        {
+            var user = await _context.Pharmacists.FindAsync(id);
+            if (user == null) return NotFound(new { message = "Benutzer nicht gefunden." });
+
+            user.FullName = dto.FullName ?? user.FullName;
+            user.PhoneNumber = dto.Phone ?? user.PhoneNumber;
+            user.Address = dto.Address ?? user.Address;
+            user.RadiusKm = dto.MaxDistanceKm > 0 ? dto.MaxDistanceKm : user.RadiusKm;
+            
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Profil erfolgreich aktualisiert." });
+        }
+
+        [HttpGet("{id}/upcoming-shifts")]
+        public async Task<IActionResult> GetUpcomingShifts(int id)
+        {
+            var shifts = await _context.JobApplications
+                .Include(a => a.JobPost)
+                .ThenInclude(j => j.Pharmacy)
+                .Where(a => a.PharmacistId == id && a.Status == "Accepted")
+                .ToListAsync();
+            
+            return Ok(shifts);
+        }
+
+        [HttpGet("{id}/all-shifts")]
+        public async Task<IActionResult> GetAllShifts(int id)
+        {
+            var shifts = await _context.JobApplications
+                .Include(a => a.JobPost)
+                .Where(a => a.PharmacistId == id)
+                .ToListAsync();
+                
+            return Ok(shifts);
+        }
+
+        [HttpGet("{id}/completed-shifts")]
+        public async Task<IActionResult> GetCompletedShifts(int id)
+        {
+            var shifts = await _context.JobApplications
+                .Include(a => a.JobPost)
+                .ThenInclude(j => j.Pharmacy)
+                .Where(a => a.PharmacistId == id && a.Status == "Completed")
+                .ToListAsync();
+                
+            return Ok(shifts);
+        }
+
+        [HttpPost("{id}/upload-cv")]
+        public async Task<IActionResult> UploadCv(int id, IFormFile file)
+        {
+            if (file == null || file.Length == 0) return BadRequest(new { message = "Keine Datei hochgeladen." });
+            
+            var user = await _context.Pharmacists.FindAsync(id);
+            if (user == null) return NotFound(new { message = "Benutzer nicht gefunden." });
+
+            user.CvDocumentPath = file.FileName;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Lebenslauf erfolgreich hochgeladen." });
+        }
+    }
+
+    public class PharmacistUpdateGeneralDto 
+    {
+        public string FullName { get; set; }
+        public string Phone { get; set; }
+        public string Address { get; set; }
+        public string Country { get; set; }
+        public string Bio { get; set; }
+        public bool HasTransportation { get; set; }
+        public string TransportationType { get; set; }
+        public bool HasDrivingLicense { get; set; }
+        public string TaxNumber { get; set; }
+        public int MaxDistanceKm { get; set; }
+        public int AvailableDaysPerWeek { get; set; }
     }
 }
