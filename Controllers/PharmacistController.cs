@@ -224,16 +224,15 @@ public async Task<IActionResult> GetUpcomingShifts(int id)
 {
     var shifts = await _context.JobApplications
         .Include(a => a.JobPost)
-        .ThenInclude(j => j.Pharmacy) // Stellen Sie sicher, dass Pharmacy in JobPost enthalten ist
         .Where(a => a.PharmacistId == id && a.Status == "Accepted")
         .Select(a => new {
+            Id = a.Id,
             JobPostId = a.JobPostId,
-            StartDate = a.JobPost.StartDate,
             StartTime = a.JobPost.StartTime,
             EndTime = a.JobPost.EndTime,
             Salary = a.JobPost.Salary,
-            PharmacyName = a.JobPost.Pharmacy != null ? a.JobPost.Pharmacy.PharmacyName : "Apotheke",
-            Address = a.JobPost.Pharmacy != null ? a.JobPost.Pharmacy.Address : "Keine Adresse"
+            StartDate = a.JobPost.StartDate, // Wichtig für das Frontend-Mapping
+            PharmacyName = a.JobPost.Pharmacy != null ? a.JobPost.Pharmacy.PharmacyName : "Apotheke"
         })
         .ToListAsync();
     
