@@ -6,7 +6,8 @@ namespace ServiceApotheke.API.Models
     public class Pharmacy
     {
         public int Id { get; set; }
-        [Required] public string PharmacyName { get; set; } = string.Empty;
+        [Required, MaxLength(150)]
+        public string PharmacyName { get; set; } = string.Empty;
         [Required] public string Email { get; set; } = string.Empty;
         [Required] public string PasswordHash { get; set; } = string.Empty;
         [Required] public string PhoneNumber { get; set; } = string.Empty;
@@ -25,6 +26,7 @@ namespace ServiceApotheke.API.Models
         public string? TargetHourlyRate { get; set; }
         public bool ParkingAvailable { get; set; }
         public string? AccommodationProvided { get; set; }
+        
 
         [JsonIgnore]
         public virtual ICollection<JobPost> JobPosts { get; set; } = new List<JobPost>();

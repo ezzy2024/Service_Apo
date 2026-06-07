@@ -4,16 +4,30 @@ using ServiceApotheke.API.Models;
 namespace ServiceApotheke.API.Data
 {
     public class DataContext : DbContext
-{
-    public DataContext(DbContextOptions<DataContext> options) : base(options) { }
-    
-    public DbSet<Pharmacist> Pharmacists { get; set; }
-    public DbSet<JobPost> JobPosts { get; set; }
-    public DbSet<JobApplication> JobApplications { get; set; }
-    public DbSet<Pharmacy> Pharmacies { get; set; } // WICHTIG!
+    {
+        public DataContext(DbContextOptions<DataContext> options) : base(options) { }
+        
+        public DbSet<Pharmacist> Pharmacists => Set<Pharmacist>();
+        public DbSet<JobPost> JobPosts => Set<JobPost>();
+        public DbSet<JobApplication> JobApplications => Set<JobApplication>();
+        public DbSet<Pharmacy> Pharmacies => Set<Pharmacy>();
+        public DbSet<PharmacistFeedback> PharmacistFeedbacks => Set<PharmacistFeedback>();
+        public DbSet<PharmacyFeedback> PharmacyFeedbacks => Set<PharmacyFeedback>();
 
-        // Neue Referenzen
-        public DbSet<PharmacistFeedback> PharmacistFeedbacks { get; set; }
-        public DbSet<PharmacyFeedback> PharmacyFeedbacks { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<JobPost>()
+                .HasOne(j => j.Pharmacy)
+                .WithMany(p => p.JobPosts)
+                .HasForeignKey(j => j.PharmacyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<JobApplication>()
+                .HasOne(a => a.JobPost)
+                .WithMany(j => j.JobApplications)
+                .HasForeignKey(a => a.JobPostId);
+        }
     }
 }

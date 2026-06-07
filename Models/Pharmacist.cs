@@ -6,22 +6,34 @@ namespace ServiceApotheke.API.Models
     public class Pharmacist
     {
         public int Id { get; set; }
-        [Required] public string FullName { get; set; } = string.Empty;
-        [Required] public string Email { get; set; } = string.Empty;
-        [Required] public string PasswordHash { get; set; } = string.Empty;
-        [Required] public string PhoneNumber { get; set; } = string.Empty;
+
+        [Required, MaxLength(100)] 
+        public string FullName { get; set; } = string.Empty;
+
+        [Required, EmailAddress] 
+        public string Email { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        public string PasswordHash { get; set; } = string.Empty;
+
+        [Phone]
+        public string PhoneNumber { get; set; } = string.Empty;
+
         public string Address { get; set; } = string.Empty;
 
-        public bool IsEmailConfirmed { get; set; }
+        // Status-Felder
+        public bool IsEmailConfirmed { get; set; } = false;
         public string? EmailConfirmationToken { get; set; }
         public bool IsVerified { get; set; } = false;
+
+        // Beruflich / Profil
         public string? PreferredContactMethod { get; set; }
         public bool HasApprobation { get; set; }
         public string? ApprobationCountry { get; set; }
         public string? ExperienceYears { get; set; }
         public string? Specialties { get; set; }
         public string? SoftwareExperience { get; set; }
-        public string? RadiusKm { get; set; }
+        public int RadiusKm { get; set; } = 20; // Hier als int für korrekte Logik
         public string? PreferredStates { get; set; }
         public string? TravelWillingness { get; set; }
         public string? Mobility { get; set; }

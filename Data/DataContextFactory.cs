@@ -9,7 +9,8 @@ namespace ServiceApotheke.API.Data
         {
             var optionsBuilder = new DbContextOptionsBuilder<DataContext>();
             
-            // Use a local SQLite file for migration generation so it never needs remote connectivity
+            // Nutzen Sie SQLite nur, wenn Sie offline Migrationen erstellen
+            // Ansonsten sollte hier eine Verbindung zu einer lokalen Test-DB stehen
             optionsBuilder.UseSqlite("Data Source=design-time.db");
 
             return new DataContext(optionsBuilder.Options);
