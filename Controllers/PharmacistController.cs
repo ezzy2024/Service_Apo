@@ -146,7 +146,7 @@ namespace ServiceApotheke.API.Controllers
             user.ExperienceYears = dto.ExperienceYears;
             user.Specialties = dto.Specialties;
             user.SoftwareExperience = dto.SoftwareExperience;
-            user.RadiusKm = dto.RadiusKm;
+            user.RadiusKm = dto.RadiusKm.ToString(); // Fix CS0029 (assuming RadiusKm is string)
             user.PreferredStates = dto.PreferredStates;
             user.TravelWillingness = dto.TravelWillingness;
             user.Mobility = dto.Mobility;
@@ -198,12 +198,11 @@ namespace ServiceApotheke.API.Controllers
             var user = await _context.Pharmacists.FindAsync(id);
             if (user == null) 
             {
-                // WICHTIG: Hier sehen wir, ob er im DB-Context gefunden wird
                 return NotFound(new { message = $"Pharmacist mit ID {id} nicht in DB gefunden." });
             }
-            user.PasswordHash = null;
+            user.PasswordHash = string.Empty; // Fix CS8625
             return Ok(user);
-            }
+        }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdatePharmacistGeneral(int id, [FromBody] PharmacistUpdateGeneralDto dto)
@@ -214,7 +213,7 @@ namespace ServiceApotheke.API.Controllers
             user.FullName = dto.FullName ?? user.FullName;
             user.PhoneNumber = dto.Phone ?? user.PhoneNumber;
             user.Address = dto.Address ?? user.Address;
-            user.RadiusKm = dto.MaxDistanceKm > 0 ? dto.MaxDistanceKm : user.RadiusKm;
+            user.RadiusKm = dto.MaxDistanceKm > 0 ? dto.MaxDistanceKm.ToString() : user.RadiusKm; // Fix CS0029
             
             await _context.SaveChangesAsync();
             return Ok(new { message = "Profil erfolgreich aktualisiert." });
@@ -225,7 +224,7 @@ namespace ServiceApotheke.API.Controllers
         {
             var shifts = await _context.JobApplications
                 .Include(a => a.JobPost)
-                .ThenInclude(j => j.Pharmacy)
+                // Removed invalid ThenInclude
                 .Where(a => a.PharmacistId == id && a.Status == "Accepted")
                 .ToListAsync();
             
@@ -248,7 +247,7 @@ namespace ServiceApotheke.API.Controllers
         {
             var shifts = await _context.JobApplications
                 .Include(a => a.JobPost)
-                .ThenInclude(j => j.Pharmacy)
+                // Removed invalid ThenInclude
                 .Where(a => a.PharmacistId == id && a.Status == "Completed")
                 .ToListAsync();
                 
@@ -272,15 +271,15 @@ namespace ServiceApotheke.API.Controllers
 
     public class PharmacistUpdateGeneralDto 
     {
-        public string FullName { get; set; }
-        public string Phone { get; set; }
-        public string Address { get; set; }
-        public string Country { get; set; }
-        public string Bio { get; set; }
+        public string? FullName { get; set; }
+        public string? Phone { get; set; }
+        public string? Address { get; set; }
+        public string? Country { get; set; }
+        public string? Bio { get; set; }
         public bool HasTransportation { get; set; }
-        public string TransportationType { get; set; }
+        public string? TransportationType { get; set; }
         public bool HasDrivingLicense { get; set; }
-        public string TaxNumber { get; set; }
+        public string? TaxNumber { get; set; }
         public int MaxDistanceKm { get; set; }
         public int AvailableDaysPerWeek { get; set; }
     }
